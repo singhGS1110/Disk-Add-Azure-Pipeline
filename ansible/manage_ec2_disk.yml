@@ -1,0 +1,60 @@
+---
+- name: Resize AWS EC2 Root Disk
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    region: "{{ aws_region }}"
+
+  tasks:
+
+  - name: Validate inputs
+    fail:
+      msg: "instance_id and disk_size are required"
+    when:
+      - instance_id | default('') | trim | length == 0
+      - disk_size | default('') | trim | length == 0
+
+
+  - name: Get instance details
+    amazon.aws.ec2_instance_info:
+      instance_ids:
+        - "{{ instance_id }}"
+      region: "{{ region }}"
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+    register: ec2_info
+
+
+  - name: Set root volume ID
+    set_fact:
+      root_volume_id: "{{ ec2_info.instances[0].block_device_mappings[0].ebs.volume_id }}"
+
+
+  - name: Modify EBS volume size
+    amazon.aws.ec2_vol:
+      id: "{{ root_volume_id }}"
+      region: "{{ region }}"
+      volume_size: "{{ disk_size | int }}"
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+    register: volume_result
+
+
+  - name: Wait for volume modification
+    amazon.aws.ec2_vol_info:
+      volume_ids:
+        - "{{ root_volume_id }}"
+      region: "{{ region }}"
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+    register: vol_status
+    until: vol_status.volumes[0].state == "in-use"
+    retries: 10
+    delay: 30
+
+
+  - name: Output result
+    debug:
+      msg: "Volume {{ root_volume_id }} resized to {{ disk_size }} GiB for instance {{ instance_id }}"
