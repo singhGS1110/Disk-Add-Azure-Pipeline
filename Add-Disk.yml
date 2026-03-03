@@ -1,0 +1,48 @@
+trigger: none
+ 
+pool:
+  name: 'Linux_Self_Hosted'
+ 
+variables:
+- group: New variable group
+ 
+steps:
+
+- script: |
+
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+
+    python3 -m venv venv
+    source venv/bin/activate
+    pip install --upgrade pip
+    pip install ansible boto3 botocore
+    ansible-galaxy collection install amazon.aws
+
+  displayName: Install Ansible
+
+
+- script: |
+
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    source venv/bin/activate
+
+    ansible-playbook ansible/manage_ec2_disk.yml -i localhost, \
+      -e instance_id=${{ instance_id }} \
+      -e disk_size=${{ disk_size }} \
+      -e aws_region=${{ aws_region }} \
+      -e account_id=${{ account_id }} \
+      -e tag_ocsappid=${{ tag_ocsappid }} \
+      -e target_host=${{ target_host }} \
+      -e aws_access_key=$(AWS_ACCESS_KEY_ID) \
+      -e aws_secret_key=$(AWS_SECRET_ACCESS_KEY)
+
+  displayName: Resize EC2 Disk
+
+
+- script: |
+    echo "===== FINAL JOB REPORT ====="
+    echo "Job Status: $(Agent.JobStatus)"
+  displayName: Final Job Status
+  condition: always()
