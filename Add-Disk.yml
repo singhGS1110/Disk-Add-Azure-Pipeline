@@ -29,12 +29,12 @@ steps:
     source venv/bin/activate
 
     ansible-playbook ansible/manage_ec2_disk.yml -i localhost, \
-      -e instance_id=${{ instance_id }} \
-      -e disk_size=${{ disk_size }} \
-      -e aws_region=${{ aws_region }} \
-      -e account_id=${{ account_id }} \
-      -e tag_ocsappid=${{ tag_ocsappid }} \
-      -e target_host=${{ target_host }} \
+      -e instance_id=$(instance_id) \
+      -e disk_size=$(disk_size) \
+      -e aws_region=$(aws_region) \
+      -e account_id=$(account_id) \
+      -e tag_ocsappid=$(tag_ocsappid) \
+      -e target_host=$(target_host) \
       -e aws_access_key=$(AWS_ACCESS_KEY_ID) \
       -e aws_secret_key=$(AWS_SECRET_ACCESS_KEY)
 
