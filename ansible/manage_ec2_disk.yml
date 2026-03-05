@@ -14,7 +14,7 @@
       msg: "instance_id and disk_size are required"
     when:
       - instance_id | default('') | trim | length == 0
-      - disk_size | default('') | trim | length == 0
+        or disk_size | default('') | trim | length == 0
 
 
   - name: Get instance details
